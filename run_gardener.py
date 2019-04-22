@@ -10,8 +10,9 @@ from Gardener import Gardener
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Path to config file")
-    parser.add_argument("-i", "--interval", type=int, default=600,
-                        help="Time interval (in seconds) to refresh torrents/patterns, defaults to 600")
+    parser.add_argument("-i", "--interval", type=int, default=0,
+                        help="Time interval (in seconds) to refresh torrents and patterns, "
+                        "if not positive will only refresh once, defaults to 0 i.e. only refresh once")
     parser.add_argument("-l", "--log", default="run_gardener.log",
                         help="Path to log file, defaults to ./run_gardener.log")
     parser.add_argument("--debug", action="store_true")

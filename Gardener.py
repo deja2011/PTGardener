@@ -204,7 +204,7 @@ class Gardener(object):
     def get_ratios(self):
         if not self.session: self.get_session()
         resp = self.session.get(urljoin(self.base_url, "torrents.php"))
-        soup = bs(resp.text, "lxml")
+        soup = bs(resp.text, "html.parser")
         user_msg = soup.find(id="usermsglink")
         return tuple(user_msg.find_all("span")[1].stripped_strings)
 
@@ -213,7 +213,7 @@ class Gardener(object):
         if not self.session:
             self.get_session()
         resp = self.session.get(urljoin(self.base_url, "torrents.php"))
-        soup = bs(resp.text, "lxml")
+        soup = bs(resp.text, "html.parser")
         is_torrent_td = lambda tag: \
             tag.name == u"td" and \
             tag.get("class") == ["embedded"] and \
@@ -327,13 +327,17 @@ class Gardener(object):
             return False
 
 
-    def run(self, interval):
+    def run(self, interval=0):
         if not self.db_conn:
             self.load_db()
-        while True:
+        if interval > 0:
+            while True:
+                self.update_patterns()
+                self.download_new_torrents()
+                time.sleep(interval)
+        else:
             self.update_patterns()
             self.download_new_torrents()
-            time.sleep(interval)
 
 
 def main():
