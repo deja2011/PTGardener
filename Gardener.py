@@ -8,6 +8,8 @@ import yaml
 import sqlite3
 import time
 from datetime import datetime
+import traceback
+from io import StringIO
 from bs4 import BeautifulSoup as bs
 from getpass import getpass
 from urllib.parse import urljoin, unquote
@@ -15,6 +17,7 @@ from urllib.parse import urljoin, unquote
 class GardenerException(Exception): pass
 class InvalidUserParameters(GardenerException): pass
 class CannotWriteUserParameters(GardenerException): pass
+class NoTorrentsFound(GardenerException): pass
 
 
 class Torrent:
@@ -220,6 +223,8 @@ class Gardener(object):
             len(tag.find_all("a")) == 1 and \
             tag.a["href"].startswith("details.php")
         tds = soup.find_all(is_torrent_td)
+        if len(tds) == 0:
+            raise NoTorrentsFound
         ptids = [re.match(r"details.php\?id=(\d+)&.*", t.find("a")["href"]).group(1) for t in tds]
         titles = [t.find("a")["title"] for t in tds]
         new_idxs = [i for i in range(len(ptids)) if ptids[i] not in [tobj.torrent_ptid for tobj in self.torrents]]
@@ -332,8 +337,13 @@ class Gardener(object):
             self.load_db()
         if interval > 0:
             while True:
-                self.update_patterns()
-                self.download_new_torrents()
+                try:
+                    self.update_patterns()
+                    self.download_new_torrents()
+                except Exception:
+                    f = StringIO()
+                    traceback.print_exc(file=f)
+                    logging.error("Exception occurred:\n{}".format(f.getvalue()))
                 time.sleep(interval)
         else:
             self.update_patterns()
